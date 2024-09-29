@@ -139,13 +139,13 @@ jobs:
           # test oldest supported versions
           - NAME: Ubuntu Oldest
             OS: ubuntu-latest
-            PY: '3.8'
-            NUMPY: '1.22'
-            SCIPY: '1.7'
+            PY: '3.9'
+            NUMPY: '1.23'
+            SCIPY: '1.9'
             OPENMPI: '4.0'
             MPI4PY: '3.0'
             PETSc: '3.13'
-            PYOPTSPARSE: 'v1.2'
+            PYOPTSPARSE: 'v2.9.0'
             SNOPT: '7.2'
             OPTIONAL: '[all]'
             TESTS: true
@@ -201,7 +201,7 @@ jobs:
           echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup conda
         uses: conda-incubator/setup-miniconda@v3
@@ -211,6 +211,9 @@ jobs:
 
       - name: Install OpenMDAO
         run: |
+          echo "Make sure we are not using anaconda packages"
+          conda config --remove channels defaults
+
           conda install numpy=${{ matrix.NUMPY }} scipy=${{ matrix.SCIPY }} -q -y
 
           python -m pip install --upgrade pip
@@ -341,8 +344,8 @@ jobs:
           conda install graphviz
           python -m pip install pyparsing psutil objgraph pyxdsm pydot
 
-          echo "Pre-install playwright dependencies to avoid warning messages"
-          playwright install --with-deps || true
+          echo "Pre-install playwright dependencies to avoid 'Playwright Host validation warning'"
+          playwright install --with-deps
 
       - name: Display environment info
         id: env_info
@@ -629,7 +632,7 @@ jobs:
           script: core.setFailed('The ${{ matrix.NAME }} job was excluded from the run, exiting...');
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup conda
         uses: conda-incubator/setup-miniconda@v3
@@ -749,6 +752,7 @@ jobs:
     name: Finish coverage
     needs: [tests, windows_tests]
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
     - uses: coverallsapp/github-action@master
       with:
@@ -766,6 +770,11 @@ jobs:
       with:
         workflow: Dymos Tests
         repo: ${{ github.repository_owner }}/dymos
+        inputs: >
+          {
+            "run_name": "Test Latest OpenMDAO Development Version",
+            "latest": true
+           }
         token: ${{ secrets.ACCESS_TOKEN }}
       if: github.event_name == 'push'
 
