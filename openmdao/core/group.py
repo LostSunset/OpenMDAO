@@ -1974,6 +1974,17 @@ class Group(System):
                                 abs_in2prom_info[tgt][tree_level] = \
                                     _PromotesInfo(src_shape=src_shape, prom=prom,
                                                   promoted_from=self.pathname)
+                else:
+                    # check for discrete targets
+                    for tgt in prom2abs_in[prom]:
+                        if tgt in self._discrete_inputs:
+                            for key, val in meta.items():
+                                # for discretes we can only set the value (not units/src_shape)
+                                if key == 'val':
+                                    self._discrete_inputs[tgt] = val
+                                elif key in ('units', 'src_shape'):
+                                    self._collect_error(f"{self.msginfo}: Cannot set '{key}={val}'"
+                                                        f" for discrete variable '{tgt}'.")
 
                 meta.update(fullmeta)
 
@@ -4494,7 +4505,9 @@ class Group(System):
                             if src_indices._flat_src:
                                 val.ravel()[src_indices.flat()] = value.flat
                             else:
-                                val[src_indices()] = value
+                                # Squeeze out singleton dimensions so that we can assign
+                                # values of different shapes when the storage order is unambiguous.
+                                np.squeeze(val[src_indices()])[...] = np.squeeze(value)
                         except Exception as err:
                             src = self._conn_global_abs_in2out[tgt]
                             msg = f"{self.msginfo}: The source indices " + \
