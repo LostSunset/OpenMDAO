@@ -45,7 +45,7 @@ all = [
 ]
 docs = [
     "ipyparallel",
-    "jupyter-book<2",
+    "jupyter-book==0.14",
     "matplotlib",
     "numpydoc>=1.1",
     "sphinx-sitemap",
@@ -78,6 +78,7 @@ test = [
     "websockets>8",
 ]
 visualization = [
+    "panel",
     "bokeh>=2.4.0",
     "colorama",
     "matplotlib",
